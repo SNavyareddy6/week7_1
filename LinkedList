@@ -1,0 +1,82 @@
+
+import java.util.LinkedList;
+
+class PC {
+    LinkedList<Integer> list = new LinkedList<>();
+    int capacity = 2;
+    int value = 0;
+
+    // Producer method
+    public void produce() throws InterruptedException {
+        while (true) {
+            synchronized (this) {
+
+                // Wait if buffer is full
+                while (list.size() == capacity) {
+                    wait();
+                }
+
+                // Produce an item
+                list.add(value);
+                System.out.println("Producer produced-" + value);
+                value++;
+
+                // Notify consumer
+                notify();
+            }
+
+            Thread.sleep(1000);
+        }
+    }
+
+    // Consumer method
+    public void consume() throws InterruptedException {
+        while (true) {
+            synchronized (this) {
+
+                // Wait if buffer is empty
+                while (list.isEmpty()) {
+                    wait();
+                }
+
+                // Consume an item
+                int val = list.removeFirst();
+                System.out.println("Consumer consumed-" + val);
+
+                // Notify producer
+                notify();
+            }
+
+            Thread.sleep(1000);
+        }
+    }
+}
+
+public class Main {
+    public static void main(String[] args) {
+
+        PC pc = new PC();
+
+        // Producer thread
+        Thread producer = new Thread(() -> {
+            try {
+                pc.produce();
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+        });
+
+        // Consumer thread
+        Thread consumer = new Thread(() -> {
+            try {
+                pc.consume();
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+        });
+
+        // Start both threads
+        producer.start();
+        consumer.start();
+    }
+}
